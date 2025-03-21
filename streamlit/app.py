@@ -1,5 +1,11 @@
 import streamlit as st
 import requests
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+BACKEND_QUERY_URL = os.getenv("BACKEND_QUERY_URL", "http://backend:8000/query")  # Default fallback
 
 # Custom CSS for a modern Shadcn-inspired design
 st.markdown("""
@@ -67,18 +73,14 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Set up the title with white color
 st.markdown("<h1 style='text-align: center; color: #ffffff;'>FinWhiz</h1>", unsafe_allow_html=True)
 
-# Create a container for the chat messages
 with st.container():
-    chat_container = st.empty()  # Use empty container to update dynamically
+    chat_container = st.empty()
 
-# Store the messages history in session state
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Function to display messages
 def display_messages():
     chat_html = "<div class='chat-container'>"
     for message in st.session_state.messages:
@@ -89,7 +91,6 @@ def display_messages():
     chat_html += "</div>"
     chat_container.markdown(chat_html, unsafe_allow_html=True)
 
-# Input form at the bottom
 with st.form(key="query_form", clear_on_submit=True):
     col1, col2 = st.columns([4, 1])
     with col1:
@@ -97,29 +98,22 @@ with st.form(key="query_form", clear_on_submit=True):
     with col2:
         submit_button = st.form_submit_button(label="Send")
 
-# Handle form submission
 if submit_button and query:
-    # Add user query to the chat history
     st.session_state.messages.append({"role": "user", "content": query})
     
-    # Send the query to the backend service
     try:
-        response = requests.post("http://backend:8000/query", json={"query": query})
+        response = requests.post(BACKEND_QUERY_URL, json={"query": query})
         response.raise_for_status()
         
-        # Extract the response
         response_data = response.json()
         bot_response = response_data.get("response", "Sorry, I didn't understand that.")
         
-        # Add bot response to the chat history
         st.session_state.messages.append({"role": "bot", "content": bot_response})
 
     except requests.exceptions.RequestException as e:
         st.session_state.messages.append({"role": "bot", "content": f"Error: {str(e)}"})
 
-    # Update the chat display
     display_messages()
 
-# Initial display of messages (only on page load)
 if not submit_button:
     display_messages()

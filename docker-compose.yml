@@ -20,7 +20,7 @@ services:
       dockerfile: chatbot/Dockerfile
     ports: ["8003:8002"]
     env_file:
-      - .env  # Add if chatbot needs GROQ_API_KEY
+      - .env
     networks:
       - finwhiz_network
 
@@ -29,6 +29,8 @@ services:
     build: ./streamlit
     ports: ["8502:8501"]
     depends_on: [backend]
+    env_file:
+      - .env 
     networks:
       - finwhiz_network
 
