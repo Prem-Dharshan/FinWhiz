@@ -1,0 +1,75 @@
+services:
+  backend:
+    container_name: backend_service
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports: ["8001:8000"]
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    networks:
+      - finwhiz_network
+
+  chatbot:
+    container_name: chatbot_service
+    build:
+      context: .
+      dockerfile: chatbot/Dockerfile
+    ports: ["8003:8002"]
+    env_file:
+      - .env  # Add if chatbot needs GROQ_API_KEY
+    networks:
+      - finwhiz_network
+
+  streamlit:
+    container_name: streamlit_ui
+    build: ./streamlit
+    ports: ["8502:8501"]
+    depends_on: [backend]
+    networks:
+      - finwhiz_network
+
+  db:
+    container_name: postgres_db
+    image: postgres:latest
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    networks:
+      - finwhiz_network
+
+  prometheus:
+    container_name: prometheus_monitor
+    image: prom/prometheus:latest
+    ports: ["9091:9090"]
+    volumes: ["./monitoring/prometheus:/etc/prometheus"]
+    networks:
+      - finwhiz_network
+
+  grafana:
+    container_name: grafana_dashboard
+    image: grafana/grafana:latest
+    ports: ["3001:3000"]
+    depends_on: [prometheus]
+    env_file:
+      - .env
+    networks:
+      - finwhiz_network
+
+volumes:
+  postgres_data:
+
+networks:
+  finwhiz_network:
+    driver: bridge
