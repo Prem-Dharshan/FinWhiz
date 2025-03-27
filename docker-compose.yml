@@ -27,7 +27,9 @@ services:
   streamlit:
     container_name: streamlit_ui
     build: ./streamlit
-    ports: ["8502:8501"]
+    ports:
+      - "8502:8501"  # UI
+      - "8006:8005" # API
     depends_on: [backend]
     env_file:
       - .env 
@@ -51,6 +53,18 @@ services:
     networks:
       - finwhiz_network
 
+  postgres-exporter:
+    container_name: postgres_exporter
+    image: prometheuscommunity/postgres-exporter:latest
+    environment:
+      - DATA_SOURCE_NAME=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres_db:5432/${POSTGRES_DB}?sslmode=disable
+    ports:
+      - "9187:9187"
+    depends_on:
+      - db
+    networks:
+      - finwhiz_network
+
   prometheus:
     container_name: prometheus_monitor
     image: prom/prometheus:latest
@@ -68,9 +82,12 @@ services:
       - .env
     networks:
       - finwhiz_network
+    volumes:
+      - grafana_data:/var/lib/grafana
 
 volumes:
   postgres_data:
+  grafana_data:
 
 networks:
   finwhiz_network:

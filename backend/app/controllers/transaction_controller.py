@@ -45,7 +45,7 @@ async def query_transactions(user_query: UserQuery, db: Session = Depends(get_db
     }
     
     # Send to chatbot service
-    chatbot_url = "http://chatbot_service:8002/chat"  # Adjust port if needed
+    chatbot_url = "http://chatbot_service:8002/chat"
     async with httpx.AsyncClient() as client:
         try:
             response = await client.post(chatbot_url, json=payload)
@@ -53,3 +53,4 @@ async def query_transactions(user_query: UserQuery, db: Session = Depends(get_db
             return response.json()  # Step 4: Return chatbot's human-readable response
         except httpx.RequestError as e:
             return {"error": f"Failed to communicate with chatbot service: {str(e)}"}
+        

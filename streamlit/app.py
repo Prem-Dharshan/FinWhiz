@@ -2,12 +2,39 @@ import streamlit as st
 import requests
 from dotenv import load_dotenv
 import os
+from flask import Flask
+from prometheus_client import Counter, generate_latest, CollectorRegistry
+import threading
+import logging
 
 load_dotenv()
 
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
+
+
+flask_app = Flask(__name__)
+
+registry = CollectorRegistry()
+REQUESTS_TOTAL = Counter("streamlit_requests_total", "Total Streamlit requests", registry=registry)
+
+
+@flask_app.route("/metrics")
+def metrics():
+    logger.debug("Metrics endpoint accessed")
+    return generate_latest(registry)  # Use the separate registry
+
+def run_flask():
+    logger.info("Starting Flask metrics server on port 8005")
+    flask_app.run(host="0.0.0.0", port=8005, use_reloader=False)
+
+
+# Start Flask in a thread
+threading.Thread(target=run_flask, daemon=True).start()
+
+
 BACKEND_QUERY_URL = os.getenv("BACKEND_QUERY_URL", "http://backend:8000/query")  # Default fallback
 
-# Custom CSS for a modern Shadcn-inspired design
 st.markdown("""
     <style>
     /* Global styles */
@@ -100,7 +127,8 @@ with st.form(key="query_form", clear_on_submit=True):
 
 if submit_button and query:
     st.session_state.messages.append({"role": "user", "content": query})
-    
+    REQUESTS_TOTAL.inc()
+
     try:
         response = requests.post(BACKEND_QUERY_URL, json={"query": query})
         response.raise_for_status()

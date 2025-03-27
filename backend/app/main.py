@@ -18,7 +18,7 @@ else:
     from app.config.database import init_db
 
 app.include_router(transaction_controller.router)
-Instrumentator().instrument(app).expose(app)
+Instrumentator().instrument(app).expose(app, endpoint="/metrics")
 
 @app.on_event("startup")
 async def startup_event():

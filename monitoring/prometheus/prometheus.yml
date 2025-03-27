@@ -1,7 +1,19 @@
+global:
+  scrape_interval: 15s
+
 scrape_configs:
   - job_name: "backend"
     static_configs:
-      - targets: ["backend:8000"] 
+      - targets: ["backend_service:8000"]
   - job_name: "chatbot"
     static_configs:
-      - targets: ["chatbot:8002"] 
+      - targets: ["chatbot_service:8002"]
+  - job_name: "streamlit"
+    static_configs:
+      - targets: ["streamlit_ui:8005"]
+  - job_name: "postgres"
+    static_configs:
+      - targets: ["postgres_exporter:9187"]
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["prometheus_monitor:9090"]

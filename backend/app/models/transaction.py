@@ -16,3 +16,4 @@ class Transaction(Base):
     i_owe_how_much = Column(Float, nullable=True)  # Amount I owe
     category = Column(String, nullable=False)
     date = Column(DateTime, default=datetime.utcnow)  # Stores transaction date
+    

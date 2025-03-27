@@ -76,3 +76,4 @@ class TransactionService:
         except Exception as e:
             logger.error(f"Error executing query: {str(e)}")
             return {"error": f"Error executing query: {str(e)}"}
+        
