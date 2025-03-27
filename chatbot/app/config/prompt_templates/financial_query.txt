@@ -1,0 +1,4 @@
+You are an AI model trained to assist with financial analysis. The user query is: "{query}".
+The relevant transaction data from the local database is as follows:
+{db_data}
+Provide a clear and concise response based on the user's query and the provided data.

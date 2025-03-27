@@ -3,7 +3,7 @@ from faker import Faker
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from app.models.transaction import Transaction
-from app.config.database import Base
+from app.config.database import DBSessionSingleton, Base
 from dotenv import load_dotenv
 from random import choice, uniform
 from datetime import datetime, timedelta
@@ -16,7 +16,7 @@ if not DATABASE_URL:
 
 # Set up SQLAlchemy engine and session
 engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base.metadata.create_all(bind=engine)  # Ensure that the tables exist
 
 # Initialize Faker
 fake = Faker()
@@ -33,15 +33,18 @@ def seed_database():
     Base.metadata.drop_all(bind=engine)  # Clear existing data
     Base.metadata.create_all(bind=engine)
 
+    # Use the Singleton DB session
+    db_session_instance = DBSessionSingleton()
+
     # Create a session
-    db = SessionLocal()
+    db = db_session_instance()
 
     try:
         # Generate 500 fake transactions
         for _ in range(500):
             # Random date within the last 30 days
             random_days = fake.random_int(min=0, max=30)
-            transaction_date = datetime.utcnow() - timedelta(days=random_days)
+            transaction_date = datetime.now(timezone.utc)  - timedelta(days=random_days)
 
             # Random amount between 1.00 and 1000.00
             amount = round(uniform(1.0, 1000.0), 2)
@@ -79,7 +82,7 @@ def seed_database():
         db.rollback()
         print(f"Error seeding database: {str(e)}")
     finally:
-        db.close()
+        db_session_instance.close(db)
 
 if __name__ == "__main__":
     seed_database()

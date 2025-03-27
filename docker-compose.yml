@@ -4,7 +4,8 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
-    ports: ["8001:8000"]
+    ports:
+      - "8001:8000"
     depends_on:
       db:
         condition: service_healthy
@@ -18,7 +19,8 @@ services:
     build:
       context: .
       dockerfile: chatbot/Dockerfile
-    ports: ["8003:8002"]
+    ports:
+      - "8003:8002"
     env_file:
       - .env
     networks:
@@ -29,7 +31,7 @@ services:
     build: ./streamlit
     ports:
       - "8502:8501"  # UI
-      - "8006:8005" # API
+      - "8006:8005"  # API
     depends_on: [backend]
     env_file:
       - .env 
@@ -68,15 +70,18 @@ services:
   prometheus:
     container_name: prometheus_monitor
     image: prom/prometheus:latest
-    ports: ["9091:9090"]
-    volumes: ["./monitoring/prometheus:/etc/prometheus"]
+    ports:
+      - "9091:9090"
+    volumes:
+      - ./monitoring/prometheus:/etc/prometheus
     networks:
       - finwhiz_network
 
   grafana:
     container_name: grafana_dashboard
     image: grafana/grafana:latest
-    ports: ["3001:3000"]
+    ports:
+      - "3001:3000"
     depends_on: [prometheus]
     env_file:
       - .env
@@ -85,9 +90,53 @@ services:
     volumes:
       - grafana_data:/var/lib/grafana
 
+  sonarqube:
+    container_name: sonarqube
+    image: sonarqube:latest
+    environment:
+      - SONARQUBE_JDBC_URL=jdbc:postgresql://postgres_db:5432/${POSTGRES_DB}
+      - SONARQUBE_JDBC_USERNAME=${POSTGRES_USER}
+      - SONARQUBE_JDBC_PASSWORD=${POSTGRES_PASSWORD}
+    ports:
+      - "9020:9000"  # Updated port to 9020 for external access
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
+    networks:
+      - finwhiz_network
+
+  sonar-scanner:
+    container_name: sonar_scanner
+    image: sonarsource/sonar-scanner-cli:latest
+    volumes:
+      - .:/usr/src
+    networks:
+      - finwhiz_network
+    entrypoint: ["sh", "-c", "sleep 30 && sonar-scanner -Dsonar.projectKey=finwhiz_key -Dsonar.sources=."]  # Added sleep to wait for SonarQube to be ready
+    depends_on:
+      - sonarqube
+    environment:
+      - SONAR_HOST_URL=http://sonarqube:9000  # Update to the internal SonarQube port
+
+  test:
+    container_name: backend_test_service
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: ["pytest", "--maxfail=1", "--disable-warnings", "-q", "--cov=app", "--cov-report=xml:coverage.xml"]
+    depends_on:
+      - backend
+      - db
+    networks:
+      - finwhiz_network
+
 volumes:
   postgres_data:
   grafana_data:
+  sonarqube_data:
+  sonarqube_extensions:
+  sonarqube_logs:
 
 networks:
   finwhiz_network:

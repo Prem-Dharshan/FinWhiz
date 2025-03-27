@@ -8,3 +8,6 @@ pydantic
 groq
 faker
 httpx
+pytest
+pytest-cov
+pytest-asyncio

@@ -1,37 +1,37 @@
-# backend/app/main.py
 import time
 from fastapi import FastAPI
 from prometheus_fastapi_instrumentator import Instrumentator
-import sys
-from sqlalchemy import exc
+from app.controllers import transaction_controller
+from app.config.database import get_db, db_session_instance  # Import get_db instead of init_db
+from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import text
 
-app = FastAPI()
 
-# Conditional import based on execution context
-if __name__ == '__main__':
-    # Standalone execution (e.g., docker run or python main.py)
-    from app.controllers import transaction_controller
-    from app.config.database import init_db
-else:
-    # Package execution (e.g., within Docker Compose or as a module)
-    from app.controllers import transaction_controller
-    from app.config.database import init_db
+app = FastAPI(title="FinWhiz Backend")
 
+# Include routers for controllers
 app.include_router(transaction_controller.router)
 Instrumentator().instrument(app).expose(app, endpoint="/metrics")
 
+
 @app.on_event("startup")
 async def startup_event():
+    """Initialize the database with retry logic on startup."""
     max_retries = 5
     retry_count = 0
     while retry_count < max_retries:
         try:
-            init_db()
-            print("Database initialized successfully")
+            # Use a session to test connectivity and initialize schema
+            db = next(get_db())  # Get a session from the singleton
+            db.execute(text("SELECT 1"))  # Use text() to wrap the SQL query
+            print("Database connection established and schema initialized successfully")
             break
-        except exc.OperationalError as e:
+        except SQLAlchemyError as e:  # Specific exception for SQLAlchemy issues
             retry_count += 1
             print(f"Database connection failed (attempt {retry_count}/{max_retries}): {e}")
             if retry_count == max_retries:
-                raise Exception("Failed to connect to database after multiple attempts")
+                raise RuntimeError("Failed to connect to database after multiple attempts") from e
             time.sleep(5)  # Wait 5 seconds before retrying
+        finally:
+            if 'db' in locals():
+                db.close()  # Ensure session is closed even on failure
