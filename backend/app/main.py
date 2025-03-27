@@ -2,14 +2,13 @@ import time
 from fastapi import FastAPI
 from prometheus_fastapi_instrumentator import Instrumentator
 from app.controllers import transaction_controller
-from app.config.database import get_db, db_session_instance  # Import get_db instead of init_db
+from app.config.database import get_db, db_session_instance
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import text
 
 
 app = FastAPI(title="FinWhiz Backend")
 
-# Include routers for controllers
 app.include_router(transaction_controller.router)
 Instrumentator().instrument(app).expose(app, endpoint="/metrics")
 
@@ -22,8 +21,8 @@ async def startup_event():
     while retry_count < max_retries:
         try:
             # Use a session to test connectivity and initialize schema
-            db = next(get_db())  # Get a session from the singleton
-            db.execute(text("SELECT 1"))  # Use text() to wrap the SQL query
+            db = next(get_db())
+            db.execute(text("SELECT 1"))
             print("Database connection established and schema initialized successfully")
             break
         except SQLAlchemyError as e:  # Specific exception for SQLAlchemy issues

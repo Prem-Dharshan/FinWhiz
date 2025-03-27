@@ -73,3 +73,23 @@ docker system prune -a
 | **PostgreSQL** | `localhost:5433` (via pgAdmin or CLI) |
 
 ---
+## 🏗 Architectural Patterns, Design Patterns, and Principles
+
+### Architectural Patterns:
+- **Microservices Architecture**: The project is divided into independent services (backend, chatbot, UI, monitoring tools) that communicate over APIs.
+
+### Design Patterns:
+- **API Gateway Pattern**: Centralized access to backend services via a single query endpoint.
+- **Observer Pattern**: Monitoring tools like Prometheus and Grafana observe and report system metrics.
+- **Builder Pattern**: Docker Compose is used to build and orchestrate services.
+
+### Principles:
+- **Separation of Concerns**: Each service handles a specific responsibility (e.g., backend for logic, chatbot for interaction, UI for visualization).
+- **12-Factor App**: Environment variables are used for configuration, ensuring portability and scalability.
+- **Infrastructure as Code**: Docker Compose defines the infrastructure setup declaratively.
+- **Single Responsibility Principle**: Each microservice adheres to a single responsibility.
+- **DRY (Don't Repeat Yourself)**: Shared configurations and reusable components are centralized.
+- **Fail-Fast Principle**: Errors in environment configuration or service dependencies are detected early during startup.
+- **Scalability**: The architecture supports horizontal scaling of individual services.
+
+---
