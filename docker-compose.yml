@@ -113,7 +113,7 @@ services:
       - .:/usr/src
     networks:
       - finwhiz_network
-    entrypoint: ["sh", "-c", "sleep 30 && sonar-scanner -Dsonar.projectKey=finwhiz_key -Dsonar.sources=."]  # Added sleep to wait for SonarQube to be ready
+    entrypoint: ["sh", "-c", "sleep 30 && sonar-scanner -Dsonar.projectKey=finwhiz_key1 -Dsonar.sources=."]  # Added sleep to wait for SonarQube to be ready
     depends_on:
       - sonarqube
     environment:
@@ -124,10 +124,17 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
-    command: ["pytest", "--maxfail=1", "--disable-warnings", "-q", "--cov=app", "--cov-report=xml:coverage.xml"]
+    command: [
+      "sh", "-c",
+      "python -m app.seed && pytest backend/tests/ --cov=backend --cov-branch --cov-report=xml:/app/coverage.xml --cov-report=term -v --disable-warnings"
+    ]
     depends_on:
-      - backend
-      - db
+      db:
+        condition: service_healthy  # Wait for DB
+    env_file:
+      - .env
+    volumes:
+      - .:/app  # Persist coverage.xml to host
     networks:
       - finwhiz_network
 

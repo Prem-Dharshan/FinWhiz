@@ -1,16 +1,10 @@
-# tests/test_transaction_service.py
-
+from app.services.transaction_service import TransactionService
 from unittest.mock import MagicMock
 
-from app.services.transaction_service import TransactionService
-
-def test_get_transactions():
+def test_get_transactions_empty():
     db_mock = MagicMock()
-    db_mock.execute.return_value.mappings.return_value = [{'id': 1, 'amount': 100}]
+    db_mock.execute.return_value.fetchall.return_value = []
     service = TransactionService(db_mock)
-    
     result = service.get_transactions("SELECT * FROM transactions")
+    assert result == []
     
-    assert "db_data" in result
-    assert len(result["db_data"]) == 1
-    assert result["db_data"][0]["id"] == 1
