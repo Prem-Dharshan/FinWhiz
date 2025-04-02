@@ -6,7 +6,7 @@ from app.models.transaction import Transaction
 from app.config.database import DBSessionSingleton, Base
 from dotenv import load_dotenv
 from random import choice, uniform
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone  # Import timezone
 
 # Load environment variables
 load_dotenv()
@@ -16,7 +16,7 @@ if not DATABASE_URL:
 
 # Set up SQLAlchemy engine and session
 engine = create_engine(DATABASE_URL)
-Base.metadata.create_all(bind=engine)  # Ensure that the tables exist
+Base.metadata.create_all(bind=engine)  # Ensure tables exist
 
 # Initialize Faker
 fake = Faker()
@@ -40,11 +40,16 @@ def seed_database():
     db = db_session_instance()
 
     try:
-        # Generate 500 fake transactions
+        # Get the current date (April 2025) and set bounds for this month
+        now = datetime.now(timezone.utc)
+        start_of_month = datetime(now.year, now.month, 1, tzinfo=timezone.utc)
+        days_in_month = (datetime(now.year, now.month + 1, 1, tzinfo=timezone.utc) - start_of_month).days if now.month < 12 else (datetime(now.year + 1, 1, 1, tzinfo=timezone.utc) - start_of_month).days
+
+        # Generate 500 fake transactions for April 2025
         for _ in range(500):
-            # Random date within the last 30 days
-            random_days = fake.random_int(min=0, max=30)
-            transaction_date = datetime.now(timezone.utc)  - timedelta(days=random_days)
+            # Random date within the current month (April 1st to April 2nd or later as days pass)
+            random_days = fake.random_int(min=0, max=min(days_in_month - 1, now.day))  # Up to current day or end of month
+            transaction_date = start_of_month + timedelta(days=random_days)
 
             # Random amount between 1.00 and 1000.00
             amount = round(uniform(1.0, 1000.0), 2)
@@ -76,13 +81,15 @@ def seed_database():
 
         # Commit the transactions to the database
         db.commit()
-        print("Successfully seeded 500 transactions into the database.")
+        print(f"Successfully seeded 500 transactions into the database for {now.strftime('%B %Y')}.")
 
     except Exception as e:
         db.rollback()
         print(f"Error seeding database: {str(e)}")
+        raise  # Re-raise to see full traceback
     finally:
-        db_session_instance.close(db)
+        db.close()  # Close the session directly
 
 if __name__ == "__main__":
     seed_database()
+    

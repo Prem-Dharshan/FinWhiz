@@ -2,5 +2,5 @@ projectKey=finwhiz_key
 serverUrl=http://sonarqube:9000
 serverVersion=25.3.0.104237
 dashboardUrl=http://sonarqube:9000/dashboard?id=finwhiz_key
-ceTaskId=68b0ecbe-3a91-435c-8f87-d45c4e5690dd
-ceTaskUrl=http://sonarqube:9000/api/ce/task?id=68b0ecbe-3a91-435c-8f87-d45c4e5690dd
+ceTaskId=2d5e03ea-b4dd-44cf-ba6c-5e45dad9f929
+ceTaskUrl=http://sonarqube:9000/api/ce/task?id=2d5e03ea-b4dd-44cf-ba6c-5e45dad9f929
