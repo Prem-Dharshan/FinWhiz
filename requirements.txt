@@ -1,0 +1,17 @@
+fastapi
+uvicorn
+sqlalchemy
+python-dotenv
+prometheus-fastapi-instrumentator
+psycopg2-binary
+pydantic
+groq
+faker
+httpx
+pytest
+pytest-cov
+pytest-asyncio
+streamlit
+requests
+flask
+groq
